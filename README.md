@@ -24,7 +24,7 @@ medallion pattern, here's the whole thing in a few lines.
      `percent_change`, threshold at `THRESHOLD_PERCENT = 25.0`, writes
      Delta to the gold container (`ukhsa_gold` location, path
      `ukhsa/covid19_outbreak_alerts`).
-  4. `04 _Query_and_Visualisation` - registers Gold as a temp view, runs SQL
+  4. `04_Query_and_Visualisation` - registers Gold as a temp view, runs SQL
      against it, charts top movers.
 - Before first run, confirm storage's wired up: `SHOW STORAGE
   CREDENTIALS;` should list `ukhsa-managed-identity`, pointing at the
@@ -181,9 +181,9 @@ Each notebook is split into small sections, run each one from top to
 bottom by clicking the play button beside it, then wait for it to
 finish before moving to the next section. Once that notebook is done,
 move on to `02_Silver_Cleaning`, then `03_Gold_Spike_Detection`, then finally
-`04 _Query_and_Visualisation`.
+`04_Query_and_Visualisation`.
 
-**3. Look at the result.** The last notebook, `04 _Query_and_Visualisation`,
+**3. Look at the result.** The last notebook, `04_Query_and_Visualisation`,
 is where you'll actually see something meaningful, a short list of
 which areas currently look concerning, and a chart showing the biggest
 changes. That's the one worth opening if someone asks "so what does
@@ -259,7 +259,7 @@ that's not you, everything above this point is what you need.
    the percentage, so a jump from 100 to 200 cases can be told apart
    from a jump from 1 to 2, both of which are technically a 50-100%
    change, only one of which is worth worrying about.
-4. `04 _Query_and_Visualisation` registers the alert table so it can be
+4. `04_Query_and_Visualisation` registers the alert table so it can be
    queried with real SQL rather than DataFrame code, then produces a
    bar chart of the areas with the largest change, spikes shown in a
    different colour from the rest, with a line marking the threshold.
@@ -290,7 +290,7 @@ never causes duplication.
 - `01_Bronze_Ingestion.ipynb` - pulls and stores raw UKHSA data.
 - `02_Silver_Cleaning.ipynb` - cleans, types and dedupes it.
 - `03_Gold_Spike_Detection.ipynb` - calculates spikes.
-- `04 _Query_and_Visualisation.ipynb` - SQL queries and a chart against the
+- `04_Query_and_Visualisation.ipynb` - SQL queries and a chart against the
   result.
 
 ## Limitations
