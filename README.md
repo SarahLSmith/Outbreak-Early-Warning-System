@@ -20,18 +20,24 @@ medallion pattern, here's the whole thing in a few lines.
   2. `02_Silver_Cleaning` - explodes/flattens/types Bronze, drops rows
      still in `in_reporting_delay_period`, dedupes on
      `geography_code + metric + date`, writes Delta to `ukhsa_silver`.
-  3. `03_Gold_Alerts` - 7 day rolling sum vs prior 7 days per geography,
+  3. `03_Gold_Spike_Detection` - 7 day rolling sum vs prior 7 days per geography,
      `percent_change`, threshold at `THRESHOLD_PERCENT = 25.0`, writes
-     Delta to `ukhsa_gold`.
-  4. `04_Query_and_Visualise` - registers Gold as a temp view, runs SQL
+     Delta to the gold container (`ukhsa_gold` location, path
+     `ukhsa/covid19_outbreak_alerts`).
+  4. `04 _Query_and_Visualisation` - registers Gold as a temp view, runs SQL
      against it, charts top movers.
 - Before first run, confirm storage's wired up: `SHOW STORAGE
   CREDENTIALS;` should list `ukhsa-managed-identity`, pointing at the
   `ukhsa-access-connector` Access Connector. If external locations
   `ukhsa_bronze` / `ukhsa_silver` / `ukhsa_gold` don't exist yet, see
   Storage setup below.
-- Swap `<storage-account-name>` at the top of each notebook before
-  running.
+- The notebooks point at the storage account `ukhsadev2026` in their
+  `abfss://` paths. Change it to your own storage account in each
+  notebook before running. `azure_connection.ipynb` takes it as a
+  `storage_account_name` variable.
+- Optional first step: `azure_connection.ipynb` lists the bronze
+  container, which confirms the credential and paths work before the
+  pipeline runs.
 - Only COVID-19 is wired up currently, it's the only topic in this
   theme with Lower Tier Local Authority level data, see Limitations.
 
@@ -66,7 +72,9 @@ specific questions about it and drawing a chart, so the result is
 something you can actually look at rather than just a table of numbers.
 
 # Examples
-Here is an example of a notebook cell making a query and returning the table below as a result
+Notebook 04 registers the gold table as a temporary view called
+`covid19_outbreak_alerts`. Here is an example query against that view,
+and the table it returns.
 
 ```
 # Query 1: which local authorities are currently flagged as a spike?
@@ -143,7 +151,7 @@ then unzip it), you'll need to bring each one into Databricks yourself.
 3. Click the three dots icon, then choose
    **Import**.
 4. Select the notebook file from your computer, e.g.
-   `01_Bronze_Ingestion.py`, and confirm.
+   `01_Bronze_Ingestion.ipynb`, and confirm.
 5. Repeat for all four files.
 
 Once imported, each one opens and runs the same way as any other
@@ -172,10 +180,10 @@ covered later in this document.
 Each notebook is split into small sections, run each one from top to
 bottom by clicking the play button beside it, then wait for it to
 finish before moving to the next section. Once that notebook is done,
-move on to `02_Silver_Cleaning`, then `03_Gold_Alerts`, then finally
-`04_Query_and_Visualise`.
+move on to `02_Silver_Cleaning`, then `03_Gold_Spike_Detection`, then finally
+`04 _Query_and_Visualisation`.
 
-**3. Look at the result.** The last notebook, `04_Query_and_Visualise`,
+**3. Look at the result.** The last notebook, `04 _Query_and_Visualisation`,
 is where you'll actually see something meaningful, a short list of
 which areas currently look concerning, and a chart showing the biggest
 changes. That's the one worth opening if someone asks "so what does
@@ -243,7 +251,7 @@ that's not you, everything above this point is what you need.
    would risk a false spike. Duplicate rows, which can build up if
    ingestion is rerun on different days, are collapsed down to one row
    per area per date.
-3. `03_Gold_Alerts` works out the most recent date actually present in
+3. `03_Gold_Spike_Detection` works out the most recent date actually present in
    the data, then sums cases for that 7 day window and the 7 days
    before it, for every area. The percentage change between the two is
    calculated, and anything over the threshold, 25% by default, is
@@ -251,7 +259,7 @@ that's not you, everything above this point is what you need.
    the percentage, so a jump from 100 to 200 cases can be told apart
    from a jump from 1 to 2, both of which are technically a 50-100%
    change, only one of which is worth worrying about.
-4. `04_Query_and_Visualise` registers the alert table so it can be
+4. `04 _Query_and_Visualisation` registers the alert table so it can be
    queried with real SQL rather than DataFrame code, then produces a
    bar chart of the areas with the largest change, spikes shown in a
    different colour from the rest, with a line marking the threshold.
@@ -279,10 +287,10 @@ never causes duplication.
 
 ### Project layout
 
-- `01_Bronze_Ingestion.py` - pulls and stores raw UKHSA data.
-- `02_Silver_Cleaning.py` - cleans, types and dedupes it.
-- `03_Gold_Alerts.py` - calculates spikes.
-- `04_Query_and_Visualise.py` - SQL queries and a chart against the
+- `01_Bronze_Ingestion.ipynb` - pulls and stores raw UKHSA data.
+- `02_Silver_Cleaning.ipynb` - cleans, types and dedupes it.
+- `03_Gold_Spike_Detection.ipynb` - calculates spikes.
+- `04 _Query_and_Visualisation.ipynb` - SQL queries and a chart against the
   result.
 
 ## Limitations
@@ -292,7 +300,7 @@ never causes duplication.
   at all, only down to UKHSA Region, so they'd need a different
   geography setting and can't be added into this pipeline as-is.
 - The 25% spike threshold is a single configurable number in
-  `03_Gold_Alerts`, not something that's been clinically validated,
+  `03_Gold_Spike_Detection`, not something that's been clinically validated,
   it's a starting point for testing the pipeline, not a real alerting
   rule yet.
 - There's currently no floor on case counts before a spike can be
